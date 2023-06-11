@@ -63,7 +63,6 @@ properties = gpd.read_file("Core Properties.geojson")
 
 properties = properties.dissolve(by="Folio").reset_index()
 
-
 def plot(data):
     #convert to NAD zone 10n
     data = data.to_crs(epsg=26910)
@@ -98,6 +97,8 @@ def plot(data):
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     
     fig.write_html("Land Assessments.html")
+    #fig.show()
+    return
 
 def oak_bay_data(properties, ob_assessments):
 
@@ -157,11 +158,14 @@ def victoria_data(properties, victoria_assessments):
     def add_zeroes(folio):
         if len(folio) < 8:
             return '0' + folio
-    
+        else:
+            return folio
+
     victoria_assessments.FOLIO = victoria_assessments.FOLIO.apply(add_zeroes)
     victoria_assessments = victoria_assessments[['FOLIO', 'Land Value', 'Improvement Value']]
 
     merged_assessments = victoria_assessments.merge(properties, left_on='FOLIO', right_on='Folio', how='left')
+
     merged_assessments = merged_assessments[['City', 'AddressCombined', 'StreetName', 'StreetNumber', 'Land Value', 'Improvement Value', 'geometry']]
     merged_assessments = gpd.GeoDataFrame(merged_assessments, geometry='geometry')
 
