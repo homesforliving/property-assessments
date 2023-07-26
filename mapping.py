@@ -1,6 +1,6 @@
 import pandas as pd
 import geopandas as gpd
-
+import numpy as np
 import os
 from inspect import getsourcefile
 from os.path import abspath
@@ -73,17 +73,20 @@ def plot(data):
     data.Area = data.Area.round(0)
 
     data = data.to_crs(epsg=4326)
-   
-    fig = px.choropleth_mapbox(data, geojson=data.geometry, locations=data.index, color='Land Value per Area',
-                            color_continuous_scale="Viridis",
-                            range_color=(1000, 4000),
-                            mapbox_style="carto-positron",
-                            zoom=9, center = {"lat": 48.4284, "lon": -123.3656},
-                            opacity=0.7,
-                            custom_data=['AddressCombined', 'Area', 'Land Value', 'Total Value', 'Land Value per Area', 'Total Value per Area']
-    )
+    
+    for column in ["Land Value per Area", "Total Value per Area"]:
+        fig = px.choropleth_mapbox(data, geojson=data.geometry, locations=data.index, color=column,
+                                #color_continuous_scale="Viridis",
+                                #red-yellow-green color scale
+                                color_continuous_scale=["red", "yellow", "green"],
+                                range_color=(1000, 4000),
+                                mapbox_style="carto-positron",
+                                zoom=12, center = {"lat": 48.4284, "lon": -123.3656},
+                                opacity=0.7,
+                                custom_data=['AddressCombined', 'Area', 'Land Value', 'Total Value', 'Land Value per Area', 'Total Value per Area']
+        )
 
-    fig.update_traces(marker_line_width=.00,
+        fig.update_traces(marker_line_width=0,
                         hovertemplate = """
                         <b>%{customdata[0]}</b><br>
                         <b>Area: </b>%{customdata[1]} M2 <br>
@@ -92,15 +95,20 @@ def plot(data):
                         <b>Land Value per M2: </b> %{customdata[4]} $/M2 <br>
                         <b>Total Value per M2: </b> %{customdata[5]} $/M2"""
                                                         )
-        #remove margin around plot
-                            
-    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+
+        fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0},
+                          coloraxis_colorbar=dict(title="$/M2"
+                        ))
+
     
-    fig.write_html("Land Assessments.html")
-    #fig.show()
+        fig.write_html("docs/"+column+".html")
+
     return
 
 def oak_bay_data(properties, ob_assessments):
+
+    #delete duplicate rows in ob_assessments
+    ob_assessments = ob_assessments.drop_duplicates()
 
     properties = properties[properties['City'] == 'OB']
     
@@ -115,7 +123,7 @@ def oak_bay_data(properties, ob_assessments):
     merged_assessments = ob_assessments.merge(properties, left_on='Folio', right_on='Folio', how='left')
 
     #convert merged_assessments to geodataframe
-    merged_assessments = merged_assessments[['City', 'AddressCombined', 'StreetName', 'StreetNumber', 'Land Value', 'Improvement Value', 'geometry']]
+    merged_assessments = merged_assessments[['City', 'AddressCombined', 'StreetName', 'StreetNumber', 'Land Value', 'Improvement Value','Folio', 'geometry']]
     merged_assessments = gpd.GeoDataFrame(merged_assessments, geometry='geometry')
 
     print("There are {} properties in Oak Bay".format(len(merged_assessments)))
@@ -181,17 +189,20 @@ def analyze():
     san = saanich_data(properties.copy(), saanich_assessments.copy())
     ob = oak_bay_data(properties.copy(), oak_bay_assessments.copy())
 
-    merged_assessments = pd.concat([vic, san, ob])
+    merged_assessments = pd.concat([ob, vic, san])
     merged_assessments = gpd.GeoDataFrame(merged_assessments, geometry='geometry')
 
     #print length
-    print("There are {} properties in Victoria , OB, and Saanich with data".format(len(merged_assessments)))
+    print("There are {} properties in Victoria, OB, and Saanich with data".format(len(merged_assessments)))
 
     #select rows where StreetName and StreetNumber are not null or blank
     properties_with_complete_addresses = merged_assessments[merged_assessments['StreetName'].notna() & merged_assessments['StreetNumber'].notna()]
 
-    #select rows where StreetName and StreetNumber are null or blank
-    properties_with_incomplete_addresses = merged_assessments[merged_assessments['StreetName'].isna() | merged_assessments['StreetNumber'].isna()]
+    #select rows where StreetName, StreetNumber, and AddressCombined are null or blank
+    properties_with_incomplete_addresses = merged_assessments[merged_assessments['StreetName'].isna() | merged_assessments['StreetNumber'].isna() | merged_assessments['AddressCombined'].isna()]
+
+    #assign a number to each row in properties_with_incomplete_addresses
+    properties_with_incomplete_addresses['AddressCombined'] = properties_with_incomplete_addresses.index
 
     #dissolve properties with complete addresses by AddressCombined, aggregate all other columns as sum
     properties_with_complete_addresses = properties_with_complete_addresses.dissolve(by='AddressCombined', aggfunc='sum').reset_index()
@@ -201,11 +212,12 @@ def analyze():
     merged_assessments = pd.concat([properties_with_complete_addresses, properties_with_incomplete_addresses])
     merged_assessments = gpd.GeoDataFrame(merged_assessments, geometry='geometry')
 
-    print(merged_assessments)
-
+    #reset index
+    merged_assessments = merged_assessments.reset_index(drop=True)
     print("Dissolved by Address. There are now {} properties in Victoria, OB and Saanich".format(len(merged_assessments)))
-    
+
     plot(merged_assessments)
+
     return
 
 analyze()
