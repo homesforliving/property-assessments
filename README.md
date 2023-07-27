@@ -16,5 +16,5 @@ Properties dataset: [here](https://hub.arcgis.com/datasets/SIPP::crd-properties/
 
 Go to the 'data' folder in this repo for the underlying data.
 
-##Getting Started
+## Getting Started
 First, download the property geojson from the link above (it's ~300mb). Then, run `condense_property_gdf` to simplify the data to the core munis (Victoria, Esquimalt, Oak Bay, Saanich). This will save a new geojson to the data folder. Once you've done this, you can run `analyze` to merge the different data sources together and create the map.
