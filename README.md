@@ -1,4 +1,7 @@
 # Property-Assessments
+
+![image](https://github.com/homesforliving/property-assessments/assets/36494032/f5c45350-a131-4426-822d-f7f2eccd3688)
+
 Property assessments for municipalities throughout the CRD, obtained from open data portals and FOI requests. So far we have Victoria, Esquimalt, Oak Bay, and Saanich. If you get a hold of data for different munis or years, feel free to add it to this repo!
 
 `mapping.py` combines the different sources of data, along with a dataset of property boundaries, to create a harmonized map of per M2 property values for the CRD.
