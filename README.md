@@ -8,7 +8,7 @@ First, land values != tax revenue.
 
 Second, I make no representation of the accuracy of this data or of the map created using it. It's always good to cross-reference data with [BC Asssessment](https://www.bcassessment.ca/?sp=1&act=). If you find any bugs, please let me know or submit a pull request! Consider this map a first draft.
 
-##Links
+# Links
 
 View the map in its current state: [here](https://homesforliving.github.io/property-assessments/)
 Properties dataset: [here](https://hub.arcgis.com/datasets/SIPP::crd-properties/explore?layer=3&location=48.440229%2C-123.278142%2C13.00)
